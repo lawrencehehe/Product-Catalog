@@ -72,10 +72,10 @@
         <div class="search-wrapper">
 
           <ion-searchbar
-            v-model="searchText"
-            placeholder="Search products..."
-            :show-clear-button="true"
-          ></ion-searchbar>
+  v-model="searchText"
+  placeholder="Search products..."
+  show-clear-button="always"
+></ion-searchbar>
 
         </div>
 
