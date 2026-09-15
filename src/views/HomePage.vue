@@ -1,405 +1,4 @@
-<template>
-  <ion-page>
-    <!-- HEADER -->
-    <ion-header class="main-header">
-      <ion-toolbar>
-        <ion-title>Product Catalog</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
-    <ion-content class="catalog-content">
-
-      <!-- HERO SECTION -->
-      <div class="hero-section">
-        <div>
-          <p class="welcome-text">WELCOME TO</p>
-          <h1>Product Catalog</h1>
-          <p class="hero-description">
-            Manage your products easily and efficiently.
-          </p>
-        </div>
-
-        <div class="hero-icon">
-          🛍️
-        </div>
-      </div>
-
-
-      <!-- STATISTICS -->
-      <div class="stats-grid">
-
-        <div class="stat-card">
-          <div class="stat-icon products-icon">
-            📦
-          </div>
-
-          <div>
-            <p>Total Products</p>
-            <h2>{{ products.length }}</h2>
-          </div>
-        </div>
-
-
-        <div class="stat-card">
-          <div class="stat-icon stock-icon">
-            📊
-          </div>
-
-          <div>
-            <p>Total Stock</p>
-            <h2>{{ totalStock }}</h2>
-          </div>
-        </div>
-
-
-        <div class="stat-card">
-          <div class="stat-icon low-icon">
-            ⚠️
-          </div>
-
-          <div>
-            <p>Low Stock</p>
-            <h2>{{ lowStock }}</h2>
-          </div>
-        </div>
-
-      </div>
-
-
-      <!-- SEARCH + ADD -->
-      <div class="control-section">
-
-        <div class="search-wrapper">
-
-          <ion-searchbar
-  v-model="searchText"
-  placeholder="Search products..."
-  show-clear-button="always"
-></ion-searchbar>
-
-        </div>
-
-        <ion-button
-          class="add-button"
-          @click="openAddForm"
-        >
-          <ion-icon
-            :icon="addOutline"
-            slot="start"
-          ></ion-icon>
-
-          Add Product
-        </ion-button>
-
-      </div>
-
-
-      <!-- PRODUCT SECTION HEADER -->
-      <div class="section-header">
-
-        <div>
-          <h2>Products</h2>
-
-          <p>
-            {{ filteredProducts.length }}
-            product{{ filteredProducts.length !== 1 ? 's' : '' }}
-            found
-          </p>
-        </div>
-
-      </div>
-
-
-      <!-- PRODUCT GRID -->
-      <div
-        v-if="filteredProducts.length > 0"
-        class="product-grid"
-      >
-
-        <ion-card
-          v-for="product in filteredProducts"
-          :key="product.id"
-          class="product-card"
-        >
-
-          <!-- PRODUCT IMAGE PLACEHOLDER -->
-          <div class="product-image">
-            <span>📦</span>
-          </div>
-
-
-          <ion-card-header>
-
-            <div class="category-badge">
-              {{ product.category }}
-            </div>
-
-            <ion-card-title>
-              {{ product.name }}
-            </ion-card-title>
-
-          </ion-card-header>
-
-
-          <ion-card-content>
-
-            <p class="description">
-              {{ product.description || 'No description available.' }}
-            </p>
-
-
-            <!-- PRICE -->
-            <div class="product-info">
-
-              <div>
-                <span class="info-label">Price</span>
-
-                <strong class="price">
-                  ₱{{ product.price.toLocaleString() }}
-                </strong>
-              </div>
-
-
-              <div>
-                <span class="info-label">Stock</span>
-
-                <span
-                  class="stock-badge"
-                  :class="{
-                    'low-stock': product.stock <= 5,
-                    'out-stock': product.stock === 0
-                  }"
-                >
-                  {{ product.stock }} available
-                </span>
-              </div>
-
-            </div>
-
-
-            <!-- ACTIONS -->
-            <div class="button-container">
-
-              <ion-button
-                class="edit-button"
-                fill="outline"
-                @click="editProduct(product)"
-              >
-                <ion-icon
-                  :icon="createOutline"
-                  slot="start"
-                ></ion-icon>
-
-                Edit
-              </ion-button>
-
-
-              <ion-button
-                class="delete-button"
-                fill="outline"
-                color="danger"
-                @click="deleteProduct(product.id)"
-              >
-                <ion-icon
-                  :icon="trashOutline"
-                  slot="start"
-                ></ion-icon>
-
-                Delete
-              </ion-button>
-
-            </div>
-
-          </ion-card-content>
-
-        </ion-card>
-
-      </div>
-
-
-      <!-- EMPTY STATE -->
-      <div
-        v-else
-        class="empty-state"
-      >
-
-        <div class="empty-icon">
-          📦
-        </div>
-
-        <h2>No Products Found</h2>
-
-        <p>
-          {{ searchText
-            ? 'Try searching for another product.'
-            : 'Start building your catalog by adding a product.'
-          }}
-        </p>
-
-        <ion-button
-          v-if="!searchText"
-          @click="openAddForm"
-        >
-          <ion-icon
-            :icon="addOutline"
-            slot="start"
-          ></ion-icon>
-
-          Add Your First Product
-        </ion-button>
-
-      </div>
-
-
-      <!-- ADD / EDIT MODAL -->
-      <ion-modal
-        :is-open="showModal"
-        @didDismiss="closeModal"
-      >
-
-        <ion-header>
-
-          <ion-toolbar>
-
-            <ion-title>
-              {{ editingProduct ? 'Edit Product' : 'Add Product' }}
-            </ion-title>
-
-            <ion-buttons slot="end">
-
-              <ion-button
-                @click="closeModal"
-              >
-                Close
-              </ion-button>
-
-            </ion-buttons>
-
-          </ion-toolbar>
-
-        </ion-header>
-
-
-        <ion-content class="modal-content ion-padding">
-
-          <div class="form-header">
-
-            <div class="form-icon">
-              {{ editingProduct ? '✏️' : '📦' }}
-            </div>
-
-            <div>
-
-              <h2>
-                {{ editingProduct
-                  ? 'Update Product'
-                  : 'Add New Product'
-                }}
-              </h2>
-
-              <p>
-                {{
-                  editingProduct
-                    ? 'Update the product information below.'
-                    : 'Enter the details of your new product.'
-                }}
-              </p>
-
-            </div>
-
-          </div>
-
-
-          <ion-item class="form-item">
-
-            <ion-input
-              v-model="form.name"
-              label="Product Name"
-              label-placement="floating"
-              placeholder="e.g. Wireless Headphones"
-            ></ion-input>
-
-          </ion-item>
-
-
-          <ion-item class="form-item">
-
-            <ion-input
-              v-model="form.price"
-              type="number"
-              label="Price"
-              label-placement="floating"
-              placeholder="e.g. 1299"
-            ></ion-input>
-
-          </ion-item>
-
-
-          <ion-item class="form-item">
-
-            <ion-input
-              v-model="form.category"
-              label="Category"
-              label-placement="floating"
-              placeholder="e.g. Electronics"
-            ></ion-input>
-
-          </ion-item>
-
-
-          <ion-item class="form-item">
-
-            <ion-input
-              v-model="form.stock"
-              type="number"
-              label="Stock Quantity"
-              label-placement="floating"
-              placeholder="e.g. 15"
-            ></ion-input>
-
-          </ion-item>
-
-
-          <ion-item class="form-item">
-
-            <ion-textarea
-              v-model="form.description"
-              label="Description"
-              label-placement="floating"
-              placeholder="Describe your product..."
-              :auto-grow="true"
-            ></ion-textarea>
-
-          </ion-item>
-
-
-          <ion-button
-            expand="block"
-            class="save-button"
-            @click="saveProduct"
-          >
-
-            <ion-icon
-              :icon="editingProduct ? createOutline : addOutline"
-              slot="start"
-            ></ion-icon>
-
-            {{ editingProduct ? 'Update Product' : 'Save Product' }}
-
-          </ion-button>
-
-
-        </ion-content>
-
-      </ion-modal>
-
-    </ion-content>
-  </ion-page>
-</template>
-
-
 <script setup lang="ts">
-
 import {
   ref,
   computed,
@@ -433,46 +32,61 @@ import {
   trashOutline
 } from 'ionicons/icons';
 
+// Firebase
+import {
+  collection,
+  addDoc,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+  doc
+} from 'firebase/firestore';
+
+import { db } from '../firebase/config';
+
+
+// ============================
+// PRODUCT INTERFACE
+// ============================
 
 interface Product {
-
-  id: number;
-
+  id: string;
   name: string;
-
   price: number;
-
   category: string;
-
   stock: number;
-
   description: string;
-
 }
 
 
+// ============================
+// PRODUCTS
+// ============================
+
 const products = ref<Product[]>([]);
-
 const searchText = ref('');
-
 const showModal = ref(false);
-
 const editingProduct = ref<Product | null>(null);
 
 
+// ============================
+// FORM
+// ============================
+
 const form = ref({
-
   name: '',
-
   price: '',
-
   category: '',
-
   stock: '',
-
   description: ''
-
 });
+
+
+// ============================
+// FIREBASE COLLECTION
+// ============================
+
+const productsCollection = collection(db, 'products');
 
 
 // ============================
@@ -480,25 +94,12 @@ const form = ref({
 // ============================
 
 const filteredProducts = computed(() => {
-
-  const search = searchText.value
-    .toLowerCase()
-    .trim();
+  const search = searchText.value.toLowerCase().trim();
 
   return products.value.filter(product =>
-
-    product.name
-      .toLowerCase()
-      .includes(search)
-
-    ||
-
-    product.category
-      .toLowerCase()
-      .includes(search)
-
+    product.name.toLowerCase().includes(search) ||
+    product.category.toLowerCase().includes(search)
   );
-
 });
 
 
@@ -507,55 +108,55 @@ const filteredProducts = computed(() => {
 // ============================
 
 const totalStock = computed(() => {
-
   return products.value.reduce(
     (total, product) => total + product.stock,
     0
   );
-
 });
 
-
 const lowStock = computed(() => {
-
   return products.value.filter(
     product => product.stock <= 5
   ).length;
-
 });
 
 
 // ============================
-// LOAD PRODUCTS
+// LOAD PRODUCTS FROM FIREBASE
+// ============================
+
+const loadProducts = async () => {
+  try {
+
+    const snapshot = await getDocs(productsCollection);
+
+    products.value = snapshot.docs.map(document => ({
+      id: document.id,
+      ...document.data()
+    })) as Product[];
+
+  } catch (error) {
+
+    console.error('Error loading products:', error);
+
+    const alert = await alertController.create({
+      header: 'Error',
+      message: 'Unable to load products from Firebase.',
+      buttons: ['OK']
+    });
+
+    await alert.present();
+  }
+};
+
+
+// ============================
+// LOAD WHEN PAGE STARTS
 // ============================
 
 onMounted(() => {
-
-  const savedProducts =
-    localStorage.getItem('products');
-
-  if (savedProducts) {
-
-    products.value =
-      JSON.parse(savedProducts);
-
-  }
-
+  loadProducts();
 });
-
-
-// ============================
-// SAVE STORAGE
-// ============================
-
-const saveToStorage = () => {
-
-  localStorage.setItem(
-    'products',
-    JSON.stringify(products.value)
-  );
-
-};
 
 
 // ============================
@@ -567,21 +168,14 @@ const openAddForm = () => {
   editingProduct.value = null;
 
   form.value = {
-
     name: '',
-
     price: '',
-
     category: '',
-
     stock: '',
-
     description: ''
-
   };
 
   showModal.value = true;
-
 };
 
 
@@ -592,104 +186,71 @@ const openAddForm = () => {
 const saveProduct = async () => {
 
   if (
-
     !form.value.name ||
-
     !form.value.price ||
-
     !form.value.category ||
-
     !form.value.stock
-
   ) {
 
-    const alert =
-      await alertController.create({
-
-        header: 'Missing Information',
-
-        message:
-          'Please complete all required fields.',
-
-        buttons: ['OK']
-
-      });
+    const alert = await alertController.create({
+      header: 'Missing Information',
+      message: 'Please complete all required fields.',
+      buttons: ['OK']
+    });
 
     await alert.present();
 
     return;
-
   }
 
+  try {
 
-  if (editingProduct.value) {
+    if (editingProduct.value) {
 
-    // UPDATE
-
-    const index =
-      products.value.findIndex(
-
-        product =>
-          product.id ===
-          editingProduct.value?.id
-
+      // UPDATE PRODUCT
+      const productRef = doc(
+        db,
+        'products',
+        editingProduct.value.id
       );
 
-
-    if (index !== -1) {
-
-      products.value[index] = {
-
-        id: editingProduct.value.id,
-
+      await updateDoc(productRef, {
         name: form.value.name,
-
         price: Number(form.value.price),
-
         category: form.value.category,
-
         stock: Number(form.value.stock),
+        description: form.value.description
+      });
 
-        description:
-          form.value.description
+    } else {
 
-      };
+      // CREATE PRODUCT
+      await addDoc(productsCollection, {
+        name: form.value.name,
+        price: Number(form.value.price),
+        category: form.value.category,
+        stock: Number(form.value.stock),
+        description: form.value.description
+      });
 
     }
 
+    await loadProducts();
+
+    closeModal();
+
+  } catch (error) {
+
+    console.error('Error saving product:', error);
+
+    const alert = await alertController.create({
+      header: 'Error',
+      message: 'Unable to save the product to Firebase.',
+      buttons: ['OK']
+    });
+
+    await alert.present();
   }
-
-  else {
-
-    // CREATE
-
-    const newProduct: Product = {
-
-      id: Date.now(),
-
-      name: form.value.name,
-
-      price: Number(form.value.price),
-
-      category: form.value.category,
-
-      stock: Number(form.value.stock),
-
-      description:
-        form.value.description
-
-    };
-
-
-    products.value.push(newProduct);
-
-  }
-
-
-  saveToStorage();
-
-  closeModal();
-
 };
 
 
@@ -697,85 +258,71 @@ const saveProduct = async () => {
 // EDIT
 // ============================
 
-const editProduct =
-  (product: Product) => {
+const editProduct = (product: Product) => {
 
-    editingProduct.value = product;
+  editingProduct.value = product;
 
-    form.value = {
-
-      name: product.name,
-
-      price: String(product.price),
-
-      category: product.category,
-
-      stock: String(product.stock),
-
-      description: product.description
-
-    };
-
-    showModal.value = true;
-
+  form.value = {
+    name: product.name,
+    price: String(product.price),
+    category: product.category,
+    stock: String(product.stock),
+    description: product.description
   };
+
+  showModal.value = true;
+};
 
 
 // ============================
 // DELETE
 // ============================
 
-const deleteProduct =
-  async (id: number) => {
+const deleteProduct = async (id: string) => {
 
-    const alert =
-      await alertController.create({
+  const alert = await alertController.create({
 
-        header: 'Delete Product',
+    header: 'Delete Product',
 
-        message:
-          'Are you sure you want to delete this product?',
+    message: 'Are you sure you want to delete this product?',
 
-        buttons: [
+    buttons: [
+      {
+        text: 'Cancel',
+        role: 'cancel'
+      },
+      {
+        text: 'Delete',
+        role: 'destructive',
 
-          {
+        handler: async () => {
 
-            text: 'Cancel',
+          try {
 
-            role: 'cancel'
+            const productRef = doc(
+              db,
+              'products',
+              id
+            );
 
-          },
+            await deleteDoc(productRef);
 
-          {
+            await loadProducts();
 
-            text: 'Delete',
+          } catch (error) {
 
-            role: 'destructive',
-
-            handler: () => {
-
-              products.value =
-                products.value.filter(
-
-                  product =>
-                    product.id !== id
-
-                );
-
-              saveToStorage();
-
-            }
-
+            console.error(
+              'Error deleting product:',
+              error
+            );
           }
+        }
+      }
+    ]
+  });
 
-        ]
-
-      });
-
-
-    await alert.present();
-
-  };
+  await alert.present();
+};
 
 
 // ============================
@@ -783,713 +330,1042 @@ const deleteProduct =
 // ============================
 
 const closeModal = () => {
-
   showModal.value = false;
-
   editingProduct.value = null;
-
 };
 
 </script>
 
 
+<!-- ======================================== -->
+<!-- IONIC USER INTERFACE                     -->
+<!-- ======================================== -->
+
+<template>
+  <IonPage class="catalog-page">
+
+    <!-- HEADER -->
+    <IonHeader class="ion-no-border">
+      <IonToolbar class="main-toolbar">
+        <IonTitle class="main-title">
+          Product Catalog
+        </IonTitle>
+      </IonToolbar>
+    </IonHeader>
+
+    <IonContent class="catalog-content">
+
+      <div class="page-container">
+
+        <!-- WELCOME BANNER -->
+        <div class="welcome-card">
+          <div class="welcome-text">
+            <span class="welcome-small">WELCOME TO</span>
+
+            <h1>Product Catalog</h1>
+
+            <p>
+              Manage your products easily and efficiently.
+            </p>
+          </div>
+
+          <div class="welcome-icon">
+            🛍️
+          </div>
+        </div>
+
+
+        <!-- STATISTICS -->
+        <div class="stats-grid">
+
+          <!-- TOTAL PRODUCTS -->
+          <div class="stat-card">
+            <div class="stat-icon products-icon">
+              📦
+            </div>
+
+            <div class="stat-info">
+              <span>Total Products</span>
+              <strong>{{ products.length }}</strong>
+            </div>
+          </div>
+
+
+          <!-- TOTAL STOCK -->
+          <div class="stat-card">
+            <div class="stat-icon stock-icon">
+              📊
+            </div>
+
+            <div class="stat-info">
+              <span>Total Stock</span>
+              <strong>{{ totalStock }}</strong>
+            </div>
+          </div>
+
+
+          <!-- LOW STOCK -->
+          <div class="stat-card">
+            <div class="stat-icon low-icon">
+              ⚠️
+            </div>
+
+            <div class="stat-info">
+              <span>Low Stock</span>
+              <strong>{{ lowStock }}</strong>
+            </div>
+          </div>
+
+        </div>
+
+
+        <!-- SEARCH -->
+        <div class="search-container">
+          <IonSearchbar
+            v-model="searchText"
+            placeholder="Search products..."
+            class="custom-search"
+          />
+        </div>
+
+
+        <!-- ADD PRODUCT -->
+        <IonButton
+          expand="block"
+          class="add-button"
+          @click="openAddForm"
+        >
+          <IonIcon
+            slot="start"
+            :icon="addOutline"
+          />
+
+          Add Product
+        </IonButton>
+
+
+        <!-- PRODUCTS HEADER -->
+        <div class="products-heading">
+          <h2>Products</h2>
+
+          <p>
+            {{ filteredProducts.length }}
+            {{ filteredProducts.length === 1 ? 'product' : 'products' }}
+            found
+          </p>
+        </div>
+
+
+        <!-- EMPTY STATE -->
+        <div
+          v-if="filteredProducts.length === 0"
+          class="empty-state"
+        >
+          <div class="empty-icon">
+            📦
+          </div>
+
+          <h2>No Products Found</h2>
+
+          <p>
+            Start building your catalog by adding a product.
+          </p>
+        </div>
+
+
+        <!-- PRODUCT CARDS -->
+        <div
+          v-else
+          class="product-list"
+        >
+
+          <div
+            v-for="product in filteredProducts"
+            :key="product.id"
+            class="product-card"
+          >
+
+            <div class="product-top">
+
+              <div class="product-symbol">
+                📦
+              </div>
+
+              <div class="product-main-info">
+                <h2>{{ product.name }}</h2>
+
+                <span class="category-badge">
+                  {{ product.category }}
+                </span>
+              </div>
+
+            </div>
+
+
+            <div class="product-details">
+
+              <div class="detail-box">
+                <span>Price</span>
+                <strong>₱{{ product.price }}</strong>
+              </div>
+
+              <div class="detail-box">
+                <span>Stock</span>
+                <strong>{{ product.stock }}</strong>
+              </div>
+
+            </div>
+
+
+            <p class="description">
+              {{ product.description || 'No description provided.' }}
+            </p>
+
+
+            <div class="product-actions">
+
+              <IonButton
+                class="edit-button"
+                @click="editProduct(product)"
+              >
+                <IonIcon
+                  slot="start"
+                  :icon="createOutline"
+                />
+                Edit
+              </IonButton>
+
+              <IonButton
+                class="delete-button"
+                @click="deleteProduct(product.id)"
+              >
+                <IonIcon
+                  slot="start"
+                  :icon="trashOutline"
+                />
+                Delete
+              </IonButton>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- ADD / EDIT MODAL -->
+      <IonModal
+        :is-open="showModal"
+        class="product-modal"
+      >
+
+        <IonHeader class="ion-no-border">
+          <IonToolbar class="modal-toolbar">
+
+            <IonTitle>
+              {{
+                editingProduct
+                  ? 'Edit Product'
+                  : 'Add Product'
+              }}
+            </IonTitle>
+
+            <IonButtons slot="end">
+              <IonButton
+                class="close-button"
+                @click="closeModal"
+              >
+                Close
+              </IonButton>
+            </IonButtons>
+
+          </IonToolbar>
+        </IonHeader>
+
+
+        <IonContent class="modal-content">
+
+          <div class="modal-form">
+
+            <div class="modal-intro">
+              <div class="modal-icon">
+                📦
+              </div>
+
+              <h2>
+                {{
+                  editingProduct
+                    ? 'Update Product'
+                    : 'New Product'
+                }}
+              </h2>
+
+              <p>
+                {{
+                  editingProduct
+                    ? 'Update the information of your product.'
+                    : 'Enter the information for your new product.'
+                }}
+              </p>
+            </div>
+
+
+            <IonItem class="form-item" lines="none">
+              <IonInput
+                v-model="form.name"
+                label="Product Name"
+                label-placement="stacked"
+                placeholder="Enter product name"
+              />
+            </IonItem>
+
+
+            <IonItem class="form-item" lines="none">
+              <IonInput
+                v-model="form.price"
+                type="number"
+                label="Price"
+                label-placement="stacked"
+                placeholder="Enter price"
+              />
+            </IonItem>
+
+
+            <IonItem class="form-item" lines="none">
+              <IonInput
+                v-model="form.category"
+                label="Category"
+                label-placement="stacked"
+                placeholder="Enter category"
+              />
+            </IonItem>
+
+
+            <IonItem class="form-item" lines="none">
+              <IonInput
+                v-model="form.stock"
+                type="number"
+                label="Stock"
+                label-placement="stacked"
+                placeholder="Enter stock"
+              />
+            </IonItem>
+
+
+            <IonItem class="form-item description-input" lines="none">
+              <IonTextarea
+                v-model="form.description"
+                label="Description"
+                label-placement="stacked"
+                placeholder="Enter product description"
+                :auto-grow="true"
+              />
+            </IonItem>
+
+
+            <IonButton
+              expand="block"
+              class="save-button"
+              @click="saveProduct"
+            >
+              {{
+                editingProduct
+                  ? 'Update Product'
+                  : 'Save Product'
+              }}
+            </IonButton>
+
+          </div>
+
+        </IonContent>
+
+      </IonModal>
+
+    </IonContent>
+
+  </IonPage>
+</template>
+
+
 <style scoped>
 
-/* ============================
-   GENERAL
-============================ */
+/* ============================= */
+/* PAGE                          */
+/* ============================= */
+
+.catalog-page {
+  --ion-background-color: #f4f6fb;
+}
 
 .catalog-content {
-  --background: #f5f7fb;
+  --background: #f4f6fb;
+}
+
+.page-container {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 28px 22px 60px;
 }
 
 
-/* ============================
-   HEADER
-============================ */
+/* ============================= */
+/* HEADER                        */
+/* ============================= */
 
-.main-header ion-toolbar {
-  --background: #4f46e5;
+.main-toolbar {
+  --background: linear-gradient(
+    135deg,
+    #5146e5,
+    #6c3ff2
+  );
+
   --color: white;
+
+  min-height: 76px;
+
+  padding-left: 15px;
+  padding-right: 15px;
 }
 
-.main-header ion-title {
+.main-title {
+  font-size: 24px;
   font-weight: 700;
 }
 
 
-/* ============================
-   HERO
-============================ */
+/* ============================= */
+/* WELCOME CARD                  */
+/* ============================= */
 
-.hero-section {
+.welcome-card {
+  min-height: 200px;
 
-  margin: 20px;
+  padding: 38px 42px;
 
-  padding: 28px;
-
-  border-radius: 22px;
+  border-radius: 30px;
 
   background:
     linear-gradient(
       135deg,
-      #4f46e5,
-      #7c3aed
+      #5146e5 0%,
+      #7b3ff2 100%
     );
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 
   color: white;
 
-  display: flex;
-
-  justify-content: space-between;
-
-  align-items: center;
-
   box-shadow:
-    0 10px 30px
-    rgba(79, 70, 229, 0.25);
+    0 15px 35px rgba(81, 70, 229, 0.22);
 
+  margin-bottom: 30px;
 }
 
-.welcome-text {
-
-  font-size: 12px;
-
+.welcome-small {
+  font-size: 14px;
+  letter-spacing: 4px;
   font-weight: 700;
-
-  letter-spacing: 2px;
-
-  opacity: 0.8;
-
-  margin: 0 0 5px;
-
+  opacity: 0.85;
 }
 
-.hero-section h1 {
+.welcome-text h1 {
+  margin: 8px 0 10px;
 
+  font-size: 34px;
+  font-weight: 800;
+}
+
+.welcome-text p {
   margin: 0;
 
-  font-size: 30px;
-
-  font-weight: 800;
-
-}
-
-.hero-description {
-
-  margin: 8px 0 0;
-
+  font-size: 17px;
   opacity: 0.9;
-
 }
 
-.hero-icon {
-
-  font-size: 55px;
-
+.welcome-icon {
+  font-size: 75px;
+  margin-left: 30px;
 }
 
 
-/* ============================
-   STATISTICS
-============================ */
+/* ============================= */
+/* STATISTICS                    */
+/* ============================= */
 
 .stats-grid {
-
   display: grid;
 
   grid-template-columns:
     repeat(3, 1fr);
 
-  gap: 15px;
+  gap: 18px;
 
-  margin: 20px;
-
+  margin-bottom: 28px;
 }
 
 .stat-card {
-
   background: white;
 
-  border-radius: 18px;
+  border-radius: 22px;
 
-  padding: 18px;
+  padding: 24px;
 
   display: flex;
-
   align-items: center;
 
-  gap: 14px;
+  gap: 18px;
 
   box-shadow:
-    0 5px 18px
-    rgba(0, 0, 0, 0.06);
+    0 8px 25px rgba(31, 38, 70, 0.07);
 
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+
+  box-shadow:
+    0 12px 30px rgba(31, 38, 70, 0.11);
 }
 
 .stat-icon {
+  width: 64px;
+  height: 64px;
 
-  width: 48px;
-
-  height: 48px;
-
-  border-radius: 14px;
+  border-radius: 18px;
 
   display: flex;
-
   align-items: center;
-
   justify-content: center;
 
-  font-size: 23px;
+  font-size: 29px;
 
+  flex-shrink: 0;
 }
 
 .products-icon {
-
-  background: #e0e7ff;
-
+  background: #e8e8ff;
 }
 
 .stock-icon {
-
-  background: #dcfce7;
-
+  background: #ddfaeb;
 }
 
 .low-icon {
-
-  background: #fef3c7;
-
+  background: #fff2c7;
 }
 
-.stat-card p {
-
-  margin: 0;
-
-  font-size: 12px;
-
-  color: #6b7280;
-
-}
-
-.stat-card h2 {
-
-  margin: 3px 0 0;
-
-  font-size: 24px;
-
-  color: #111827;
-
-}
-
-
-/* ============================
-   CONTROLS
-============================ */
-
-.control-section {
-
-  margin: 25px 20px;
-
+.stat-info {
   display: flex;
-
-  gap: 15px;
-
-  align-items: center;
-
+  flex-direction: column;
 }
 
-.search-wrapper {
-
-  flex: 1;
-
-}
-
-.search-wrapper ion-searchbar {
-
-  --background: white;
-
-  --border-radius: 14px;
-
-  padding: 0;
-
-}
-
-.add-button {
-
-  --background: #4f46e5;
-
-  --border-radius: 12px;
-
-  height: 48px;
-
-  font-weight: 600;
-
-  margin: 0;
-
-}
-
-
-/* ============================
-   SECTION HEADER
-============================ */
-
-.section-header {
-
-  margin: 30px 20px 10px;
-
-}
-
-.section-header h2 {
-
-  margin: 0;
-
-  font-size: 23px;
-
-  font-weight: 750;
-
-  color: #111827;
-
-}
-
-.section-header p {
-
-  margin: 5px 0;
-
-  color: #6b7280;
+.stat-info span {
+  color: #777d8c;
 
   font-size: 14px;
 
+  margin-bottom: 3px;
+}
+
+.stat-info strong {
+  color: #171925;
+
+  font-size: 29px;
+
+  line-height: 1;
 }
 
 
-/* ============================
-   PRODUCT GRID
-============================ */
+/* ============================= */
+/* SEARCH                        */
+/* ============================= */
 
-.product-grid {
+.search-container {
+  margin-bottom: 15px;
+}
 
+.custom-search {
+  padding: 0;
+
+  --background: white;
+
+  --border-radius: 17px;
+
+  --box-shadow:
+    0 5px 18px rgba(31, 38, 70, 0.1);
+
+  --placeholder-color: #969aa6;
+
+  --icon-color: #777d8c;
+
+  min-height: 58px;
+}
+
+
+/* ============================= */
+/* ADD BUTTON                    */
+/* ============================= */
+
+.add-button {
+  --background: #5547e8;
+
+  --background-hover: #4639d7;
+
+  --border-radius: 17px;
+
+  --box-shadow:
+    0 8px 20px rgba(85, 71, 232, 0.25);
+
+  height: 58px;
+
+  margin: 0 0 40px;
+
+  font-size: 16px;
+
+  font-weight: 700;
+
+  letter-spacing: 1px;
+}
+
+
+/* ============================= */
+/* PRODUCTS HEADER               */
+/* ============================= */
+
+.products-heading {
+  margin: 0 5px 20px;
+}
+
+.products-heading h2 {
+  color: #171925;
+
+  margin: 0;
+
+  font-size: 27px;
+
+  font-weight: 800;
+}
+
+.products-heading p {
+  margin: 6px 0 0;
+
+  color: #7c8190;
+
+  font-size: 15px;
+}
+
+
+/* ============================= */
+/* EMPTY STATE                   */
+/* ============================= */
+
+.empty-state {
+  text-align: center;
+
+  padding: 55px 20px 70px;
+
+  color: #777d8c;
+}
+
+.empty-icon {
+  width: 115px;
+  height: 115px;
+
+  margin: 0 auto 25px;
+
+  border-radius: 50%;
+
+  background: #eceeff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 52px;
+}
+
+.empty-state h2 {
+  color: #171925;
+
+  font-size: 25px;
+
+  margin-bottom: 10px;
+}
+
+.empty-state p {
+  margin: 0;
+
+  font-size: 15px;
+}
+
+
+/* ============================= */
+/* PRODUCT CARDS                 */
+/* ============================= */
+
+.product-list {
   display: grid;
 
   grid-template-columns:
     repeat(2, 1fr);
 
   gap: 20px;
-
-  margin: 20px;
-
 }
 
-
-/* ============================
-   PRODUCT CARD
-============================ */
-
 .product-card {
-
-  margin: 0;
-
   background: white;
 
-  border-radius: 20px;
+  border-radius: 23px;
 
-  overflow: hidden;
+  padding: 24px;
 
   box-shadow:
-    0 6px 20px
-    rgba(0, 0, 0, 0.07);
+    0 8px 25px rgba(31, 38, 70, 0.08);
 
   transition:
-    transform 0.2s ease;
-
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .product-card:hover {
+  transform: translateY(-3px);
 
-  transform: translateY(-4px);
-
+  box-shadow:
+    0 14px 32px rgba(31, 38, 70, 0.12);
 }
 
-.product-image {
-
-  height: 150px;
-
-  background:
-    linear-gradient(
-      135deg,
-      #eef2ff,
-      #ede9fe
-    );
-
+.product-top {
   display: flex;
 
   align-items: center;
 
+  gap: 16px;
+
+  margin-bottom: 22px;
+}
+
+.product-symbol {
+  width: 58px;
+  height: 58px;
+
+  border-radius: 17px;
+
+  background: #eceeff;
+
+  display: flex;
+  align-items: center;
   justify-content: center;
 
+  font-size: 29px;
+
+  flex-shrink: 0;
 }
 
-.product-image span {
+.product-main-info h2 {
+  margin: 0 0 7px;
 
-  font-size: 60px;
+  color: #171925;
 
-}
+  font-size: 20px;
 
-.product-card ion-card-header {
-
-  padding-bottom: 5px;
-
+  font-weight: 750;
 }
 
 .category-badge {
-
   display: inline-block;
 
-  background: #eef2ff;
+  background: #eeeefe;
 
-  color: #4f46e5;
+  color: #5749dc;
 
   padding: 5px 10px;
 
   border-radius: 20px;
 
-  font-size: 11px;
-
-  font-weight: 700;
-
-  margin-bottom: 8px;
-
-}
-
-.product-card ion-card-title {
-
-  font-size: 20px;
-
-  font-weight: 750;
-
-  color: #111827;
-
-}
-
-.product-card ion-card-content {
-
-  padding-top: 8px;
-
-}
-
-.description {
-
-  color: #6b7280;
-
-  font-size: 13px;
-
-  line-height: 1.5;
-
-  min-height: 40px;
-
-}
-
-
-/* ============================
-   PRODUCT INFO
-============================ */
-
-.product-info {
-
-  display: flex;
-
-  justify-content: space-between;
-
-  align-items: end;
-
-  margin-top: 18px;
-
-  padding-top: 15px;
-
-  border-top:
-    1px solid #f0f0f0;
-
-}
-
-.info-label {
-
-  display: block;
-
-  font-size: 11px;
-
-  color: #9ca3af;
-
-  margin-bottom: 3px;
-
-}
-
-.price {
-
-  font-size: 20px;
-
-  color: #4f46e5;
-
-}
-
-.stock-badge {
-
-  display: inline-block;
-
-  background: #dcfce7;
-
-  color: #166534;
-
-  padding: 5px 9px;
-
-  border-radius: 8px;
-
-  font-size: 11px;
-
-  font-weight: 700;
-
-}
-
-.low-stock {
-
-  background: #fef3c7;
-
-  color: #92400e;
-
-}
-
-.out-stock {
-
-  background: #fee2e2;
-
-  color: #991b1b;
-
-}
-
-
-/* ============================
-   BUTTONS
-============================ */
-
-.button-container {
-
-  display: flex;
-
-  gap: 8px;
-
-  margin-top: 18px;
-
-}
-
-.button-container ion-button {
-
-  flex: 1;
-
-  height: 38px;
-
-  margin: 0;
-
-  --border-radius: 10px;
-
   font-size: 12px;
 
   font-weight: 600;
+}
 
+.product-details {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, 1fr);
+
+  gap: 12px;
+
+  margin-bottom: 18px;
+}
+
+.detail-box {
+  background: #f7f8fc;
+
+  border-radius: 14px;
+
+  padding: 13px 15px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+.detail-box span {
+  color: #898e9b;
+
+  font-size: 12px;
+}
+
+.detail-box strong {
+  color: #20222d;
+
+  font-size: 16px;
+}
+
+.description {
+  color: #707583;
+
+  font-size: 14px;
+
+  line-height: 1.6;
+
+  min-height: 44px;
+}
+
+.product-actions {
+  display: flex;
+
+  gap: 10px;
+
+  margin-top: 18px;
+}
+
+.product-actions IonButton {
+  flex: 1;
 }
 
 .edit-button {
+  --background: #5547e8;
 
-  --color: #4f46e5;
-
-  --border-color: #c7d2fe;
-
+  --border-radius: 12px;
 }
 
 .delete-button {
+  --background: #fff0f1;
 
-  --border-color: #fecaca;
+  --color: #e54855;
 
+  --border-radius: 12px;
+
+  --box-shadow: none;
 }
 
 
-/* ============================
-   EMPTY STATE
-============================ */
+/* ============================= */
+/* MODAL                         */
+/* ============================= */
 
-.empty-state {
+.product-modal {
+  --width: 520px;
 
-  text-align: center;
+  --height: 720px;
 
-  margin: 80px 20px;
-
+  --border-radius: 25px;
 }
 
-.empty-icon {
+.modal-toolbar {
+  --background: #5547e8;
 
-  width: 90px;
+  --color: white;
 
-  height: 90px;
-
-  margin: auto;
-
-  border-radius: 50%;
-
-  background: #eef2ff;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  font-size: 40px;
-
+  padding: 7px;
 }
 
-.empty-state h2 {
-
-  margin-top: 20px;
-
-  color: #111827;
-
+.close-button {
+  --color: white;
 }
-
-.empty-state p {
-
-  color: #6b7280;
-
-  margin-bottom: 25px;
-
-}
-
-
-/* ============================
-   MODAL
-============================ */
 
 .modal-content {
-
-  --background: #f8fafc;
-
+  --background: #f6f7fb;
 }
 
-.form-header {
+.modal-form {
+  padding: 25px;
+}
 
-  display: flex;
-
-  align-items: center;
-
-  gap: 15px;
+.modal-intro {
+  text-align: center;
 
   margin-bottom: 25px;
-
 }
 
-.form-icon {
+.modal-icon {
+  width: 70px;
+  height: 70px;
 
-  width: 55px;
+  margin: 0 auto 12px;
 
-  height: 55px;
+  background: #eceeff;
 
-  border-radius: 15px;
-
-  background: #e0e7ff;
+  border-radius: 20px;
 
   display: flex;
-
   align-items: center;
-
   justify-content: center;
 
-  font-size: 25px;
-
+  font-size: 34px;
 }
 
-.form-header h2 {
+.modal-intro h2 {
+  color: #171925;
+
+  margin: 0 0 7px;
+
+  font-size: 23px;
+}
+
+.modal-intro p {
+  color: #7c8190;
 
   margin: 0;
 
-  font-size: 22px;
-
-  color: #111827;
-
-}
-
-.form-header p {
-
-  margin: 4px 0 0;
-
-  color: #6b7280;
-
-  font-size: 13px;
-
+  font-size: 14px;
 }
 
 .form-item {
-
   --background: white;
 
-  --border-radius: 12px;
+  --border-radius: 14px;
 
-  --border-color: #e5e7eb;
+  --padding-start: 16px;
 
-  margin-bottom: 14px;
+  --inner-padding-end: 16px;
 
-  border-radius: 12px;
+  margin-bottom: 13px;
 
+  box-shadow:
+    0 3px 12px rgba(31, 38, 70, 0.05);
+}
+
+.description-input {
+  min-height: 95px;
 }
 
 .save-button {
+  --background: #5547e8;
 
-  --background: #4f46e5;
+  --border-radius: 15px;
 
-  --border-radius: 12px;
+  --box-shadow:
+    0 7px 18px rgba(85, 71, 232, 0.25);
 
-  height: 50px;
+  height: 55px;
 
-  margin-top: 25px;
+  margin-top: 22px;
 
   font-weight: 700;
+}
+
+
+/* ============================= */
+/* MOBILE RESPONSIVE             */
+/* ============================= */
+
+@media (max-width: 700px) {
+
+  .page-container {
+    padding:
+      22px 17px 50px;
+  }
+
+  .main-toolbar {
+    min-height: 70px;
+  }
+
+  .main-title {
+    font-size: 21px;
+  }
+
+  .welcome-card {
+    padding:
+      30px 25px;
+
+    min-height: 180px;
+
+    border-radius: 25px;
+  }
+
+  .welcome-text h1 {
+    font-size: 28px;
+  }
+
+  .welcome-text p {
+    font-size: 15px;
+  }
+
+  .welcome-icon {
+    font-size: 55px;
+
+    margin-left: 15px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+
+    gap: 14px;
+  }
+
+  .stat-card {
+    padding: 20px;
+  }
+
+  .product-list {
+    grid-template-columns: 1fr;
+  }
+
+  .product-modal {
+    --width: 100%;
+
+    --height: 90%;
+
+    --border-radius: 25px 25px 0 0;
+  }
 
 }
 
 
-/* ============================
-   RESPONSIVE
-============================ */
+/* SMALL PHONES */
+@media (max-width: 430px) {
 
-@media (max-width: 700px) {
-
-  .stats-grid {
-
-    grid-template-columns: 1fr;
-
+  .welcome-card {
+    padding: 27px 22px;
   }
 
-  .product-grid {
-
-    grid-template-columns: 1fr;
-
-  }
-
-  .control-section {
-
-    flex-direction: column;
-
-    align-items: stretch;
-
-  }
-
-  .add-button {
-
-    width: 100%;
-
-  }
-
-  .hero-section h1 {
-
+  .welcome-text h1 {
     font-size: 24px;
+  }
 
+  .welcome-icon {
+    font-size: 43px;
+  }
+
+  .stat-icon {
+    width: 57px;
+    height: 57px;
+  }
+
+  .product-actions {
+    flex-direction: column;
   }
 
 }
